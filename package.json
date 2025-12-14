@@ -1,7 +1,11 @@
 {
-  "name": "@musistudio/claude-code-router",
+  "name": "claude-code-router",
   "version": "1.0.72",
   "description": "Use Claude Code without an Anthropics account and route it to another LLM provider",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajmahavir/CCRVI.git"
+  },
   "bin": {
     "ccr": "dist/cli.js"
   },
@@ -16,7 +20,7 @@
     "llm",
     "anthropic"
   ],
-  "author": "musistudio",
+  "author": "rajmahavir",
   "license": "MIT",
   "dependencies": {
     "@fastify/multipart": "^9.3.0",

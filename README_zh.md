@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/badge/%F0%9F%87%AC%F0%9F%87%A7-English-000aff?style=flat)](README.md)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?&logo=discord&logoColor=white)](https://discord.gg/rdftVMaUcS)
-[![](https://img.shields.io/github/license/musistudio/claude-code-router)](https://github.com/musistudio/claude-code-router/blob/main/LICENSE)
+[![](https://img.shields.io/github/license/rajmahavir/CCRVI)](https://github.com/rajmahavir/CCRVI/blob/main/LICENSE)
 
 <hr>
 
