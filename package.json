@@ -28,7 +28,6 @@
     "@inquirer/prompts": "^5.0.0",
     "@musistudio/llms": "^1.0.46",
     "dotenv": "^16.4.7",
-    "esbuild": "^0.25.1",
     "find-process": "^2.0.0",
     "json5": "^2.2.3",
     "lru-cache": "^11.2.2",
