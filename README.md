@@ -39,8 +39,16 @@ npm install -g @anthropic-ai/claude-code
 
 Then, install Claude Code Router:
 
+**Option 1: Install from GitHub (Recommended if not published to npm)**
 ```shell
 npm install -g rajmahavir/CCRVI
+```
+This directly installs the latest version from your GitHub repository.
+
+**Option 2: Install from npm (Requires publishing)**
+If you have published your package to the npm registry under the `@rajmahavir` scope, you can install it using:
+```shell
+npm install -g @rajmahavir/claude-code-router
 ```
 
 ### 2. Configuration
