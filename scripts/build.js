@@ -78,25 +78,33 @@ try {
   }
   
   // Build the UI
-  const uiDir = path.resolve('ui');
-  if (fs.existsSync(uiDir)) {
-    if (!fs.existsSync(path.join(uiDir, 'node_modules'))) {
-      console.log('Installing UI dependencies...');
-      execSync('npm install', { cwd: uiDir, stdio: 'inherit' });
-    }
-    console.log('Building UI...');
-    execSync('npm run build', { cwd: uiDir, stdio: 'inherit' });
-    
-    // Copy the built UI index.html to dist
-    console.log('Copying UI build artifacts...');
-    const uiIndexSrc = path.join(uiDir, 'dist', 'index.html');
-    if (fs.existsSync(uiIndexSrc)) {
-      copyFile(uiIndexSrc, 'dist/index.html');
+  try {
+    const uiDir = path.resolve('ui');
+    if (fs.existsSync(uiDir)) {
+      if (!fs.existsSync(path.join(uiDir, 'node_modules'))) {
+        console.log('Installing UI dependencies...');
+        execSync('npm install', { cwd: uiDir, stdio: 'inherit' });
+      }
+      console.log('Building UI...');
+      execSync('npm run build', { cwd: uiDir, stdio: 'inherit' });
+      
+      // Copy the built UI index.html to dist
+      console.log('Copying UI build artifacts...');
+      const uiIndexSrc = path.join(uiDir, 'dist', 'index.html');
+      if (fs.existsSync(uiIndexSrc)) {
+        copyFile(uiIndexSrc, 'dist/index.html');
+      } else {
+        console.warn('Warning: UI build artifact index.html not found');
+      }
     } else {
-      console.warn('Warning: UI build artifact index.html not found');
+      console.warn('Warning: UI directory not found');
     }
-  } else {
-    console.warn('Warning: UI directory not found');
+  } catch (uiError) {
+      console.warn('****************************************************************');
+      console.warn('WARNING: UI Build failed. The Web UI will not be available.');
+      console.warn('The CLI tool will still function correctly.');
+      console.warn('Error details:', uiError.message);
+      console.warn('****************************************************************');
   }
   
   console.log('Build completed successfully!');
