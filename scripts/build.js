@@ -50,7 +50,7 @@ try {
   }
 
   console.log(`Using esbuild at: ${esbuildBin}`);
-  execSync(`${esbuildBin} src/cli.ts --bundle --platform=node --outfile=dist/cli.js`, { stdio: 'inherit' });
+  execSync(`${esbuildBin} src/cli.ts --bundle --platform=node --packages=external --outfile=dist/cli.js`, { stdio: 'inherit' });
   
   // Copy the tiktoken WASM file
   console.log('Copying tiktoken WASM file...');
