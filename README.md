@@ -40,7 +40,7 @@ npm install -g @anthropic-ai/claude-code
 Then, install Claude Code Router:
 
 ```shell
-npm install -g git+https://github.com/rajmahavir/CCRVI.git
+npm install -g rajmahavir/CCRVI
 ```
 
 ### 2. Configuration
