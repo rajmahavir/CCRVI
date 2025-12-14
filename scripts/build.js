@@ -16,7 +16,6 @@ try {
   execSync('shx cp node_modules/tiktoken/tiktoken_bg.wasm dist/tiktoken_bg.wasm', { stdio: 'inherit' });
   
   // Build the UI
-  console.log('Building UI...');
   // Check if node_modules exists in ui directory, if not install dependencies
   if (!fs.existsSync('ui/node_modules')) {
     console.log('Installing UI dependencies...');

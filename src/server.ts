@@ -3,12 +3,16 @@ import { readConfigFile, writeConfigFile, backupConfigFile } from "./utils";
 import { checkForUpdates, performUpdate } from "./utils";
 import { join } from "path";
 import fastifyStatic from "@fastify/static";
-import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from "fs";
+import fastifyMultipart from "@fastify/multipart";
+import { readdirSync, statSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import {calculateTokenCount} from "./utils/router";
 
 export const createServer = (config: any): Server => {
   const server = new Server(config);
+
+  // Register multipart support for file uploads
+  server.app.register(fastifyMultipart);
 
   server.app.post("/v1/messages/count_tokens", async (req, reply) => {
     const {messages, tools, system} = req.body;
@@ -31,6 +35,54 @@ export const createServer = (config: any): Server => {
       })
     );
     return { transformers: transformerList };
+  });
+
+  // Add endpoint to upload service account key
+  server.app.post("/api/upload/service-account", async (req, reply) => {
+    try {
+      const data = await req.file();
+      if (!data) {
+        return reply.status(400).send({ error: "No file uploaded" });
+      }
+
+      const buffer = await data.toBuffer();
+      const content = buffer.toString("utf-8");
+      let keyJson;
+
+      try {
+        keyJson = JSON.parse(content);
+      } catch (e) {
+        return reply.status(400).send({ error: "Invalid JSON file" });
+      }
+
+      // Basic validation for Service Account Key
+      if (keyJson.type !== "service_account" || !keyJson.project_id) {
+        return reply.status(400).send({ error: "Invalid Service Account Key: Missing type or project_id" });
+      }
+
+      const projectId = keyJson.project_id;
+      const keysDir = join(homedir(), ".claude-code-router", "keys");
+      
+      if (!existsSync(keysDir)) {
+        mkdirSync(keysDir, { recursive: true });
+      }
+
+      // Save file with project_id as name to avoid overwriting issues (or could use original filename)
+      // Using project_id.json is cleaner for identification
+      const filePath = join(keysDir, `${projectId}.json`);
+      writeFileSync(filePath, content);
+
+      return { 
+        success: true, 
+        projectId: projectId, 
+        filePath: filePath,
+        message: "Service account key uploaded successfully" 
+      };
+
+    } catch (error) {
+      console.error("Failed to upload service account key:", error);
+      return reply.status(500).send({ error: "Failed to upload service account key" });
+    }
   });
 
   // Add endpoint to save config.json with access control

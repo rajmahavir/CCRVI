@@ -235,6 +235,43 @@ class ApiClient {
   async clearLogs(filePath: string): Promise<void> {
     return this.delete<void>(`/logs?file=${encodeURIComponent(filePath)}`);
   }
+
+  // Upload service account key
+  async uploadServiceAccountKey(file: File): Promise<{ success: boolean; projectId: string; filePath: string; message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Custom handling for file upload to avoid setting Content-Type to application/json
+    const url = `${this.baseUrl}/upload/service-account`;
+    
+    // Get auth headers but remove Content-Type to let browser set it with boundary
+    const headers = this.createHeaders('');
+    delete (headers as Record<string, string>)['Content-Type'];
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: formData,
+      });
+      
+      if (response.status === 401) {
+        localStorage.removeItem('apiKey');
+        window.dispatchEvent(new CustomEvent('unauthorized'));
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('File upload error:', error);
+      throw error;
+    }
+  }
 }
 
 // Create a default instance of the API client
