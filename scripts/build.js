@@ -4,6 +4,9 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// Ensure we are in the project root
+process.chdir(path.join(__dirname, '..'));
+
 console.log('Building Claude Code Router...');
 
 function copyFile(src, dest) {
@@ -12,19 +15,6 @@ function copyFile(src, dest) {
     fs.mkdirSync(destDir, { recursive: true });
   }
   fs.copyFileSync(src, dest);
-}
-
-function findEsbuildBin() {
-    const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'esbuild');
-    if (fs.existsSync(localBin)) return localBin;
-    
-    // Check if it's in the path (global)
-    try {
-        execSync('command -v esbuild');
-        return 'esbuild';
-    } catch (e) {
-        return null;
-    }
 }
 
 try {
@@ -36,42 +26,27 @@ try {
   // Build the main CLI application
   console.log('Building CLI application...');
   
-  let esbuildBin = findEsbuildBin();
-  
-  if (!esbuildBin) {
-      console.log('esbuild binary not found, installing it locally...');
-      try {
-          execSync('npm install esbuild --no-save', { stdio: 'inherit' });
-          esbuildBin = path.join(process.cwd(), 'node_modules', '.bin', 'esbuild');
-      } catch (e) {
-          console.error('Failed to install esbuild:', e.message);
-          process.exit(1);
-      }
-  }
-
-  console.log(`Using esbuild at: ${esbuildBin}`);
-  execSync(`${esbuildBin} src/cli.ts --bundle --platform=node --packages=external --outfile=dist/cli.js`, { stdio: 'inherit' });
+  // Use esbuild API directly since it's a dependency
+  const esbuild = require('esbuild');
+  esbuild.buildSync({
+    entryPoints: ['src/cli.ts'],
+    bundle: true,
+    platform: 'node',
+    outfile: 'dist/cli.js',
+    packages: 'external', // Don't bundle dependencies
+  });
   
   // Copy the tiktoken WASM file
   console.log('Copying tiktoken WASM file...');
-  let tiktokenSrc = path.join(process.cwd(), 'node_modules', 'tiktoken', 'tiktoken_bg.wasm');
-  
-  if (!fs.existsSync(tiktokenSrc)) {
-      try {
-          tiktokenSrc = require.resolve('tiktoken/tiktoken_bg.wasm');
-      } catch (e) {
-          // tiktoken might be missing too
-          console.log('tiktoken not found, ensuring dependencies...');
-          try {
-             execSync('npm install tiktoken --no-save', { stdio: 'inherit' });
-             tiktokenSrc = path.join(process.cwd(), 'node_modules', 'tiktoken', 'tiktoken_bg.wasm');
-          } catch(e) {
-             console.warn('Could not install tiktoken, skipping copy.');
-          }
-      }
+  let tiktokenSrc;
+  try {
+    tiktokenSrc = require.resolve('tiktoken/tiktoken_bg.wasm');
+  } catch (e) {
+    // Fallback path check
+    tiktokenSrc = path.join(process.cwd(), 'node_modules', 'tiktoken', 'tiktoken_bg.wasm');
   }
 
-  if (fs.existsSync(tiktokenSrc)) {
+  if (tiktokenSrc && fs.existsSync(tiktokenSrc)) {
     copyFile(tiktokenSrc, 'dist/tiktoken_bg.wasm');
   } else {
     console.warn('Warning: tiktoken_bg.wasm not found.');
