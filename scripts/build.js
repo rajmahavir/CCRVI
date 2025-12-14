@@ -14,6 +14,19 @@ function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
+function findEsbuildBin() {
+    const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'esbuild');
+    if (fs.existsSync(localBin)) return localBin;
+    
+    // Check if it's in the path (global)
+    try {
+        execSync('command -v esbuild');
+        return 'esbuild';
+    } catch (e) {
+        return null;
+    }
+}
+
 try {
   // Ensure dist directory exists
   if (!fs.existsSync('dist')) {
@@ -23,28 +36,21 @@ try {
   // Build the main CLI application
   console.log('Building CLI application...');
   
-  let esbuild;
-  try {
-    esbuild = require('esbuild');
-  } catch (e) {
-    console.log('esbuild module not found, installing it locally...');
-    execSync('npm install esbuild --no-save', { stdio: 'inherit' });
-    esbuild = require('esbuild');
+  let esbuildBin = findEsbuildBin();
+  
+  if (!esbuildBin) {
+      console.log('esbuild binary not found, installing it locally...');
+      try {
+          execSync('npm install esbuild --no-save', { stdio: 'inherit' });
+          esbuildBin = path.join(process.cwd(), 'node_modules', '.bin', 'esbuild');
+      } catch (e) {
+          console.error('Failed to install esbuild:', e.message);
+          process.exit(1);
+      }
   }
 
-  try {
-    esbuild.buildSync({
-      entryPoints: ['src/cli.ts'],
-      bundle: true,
-      platform: 'node',
-      outfile: 'dist/cli.js',
-    });
-  } catch (buildError) {
-    console.error('esbuild failed via API, trying binary...');
-    // Fallback to binary if API fails (though API is preferred)
-    const esbuildBin = path.join(process.cwd(), 'node_modules', '.bin', 'esbuild');
-    execSync(`${esbuildBin} src/cli.ts --bundle --platform=node --outfile=dist/cli.js`, { stdio: 'inherit' });
-  }
+  console.log(`Using esbuild at: ${esbuildBin}`);
+  execSync(`${esbuildBin} src/cli.ts --bundle --platform=node --outfile=dist/cli.js`, { stdio: 'inherit' });
   
   // Copy the tiktoken WASM file
   console.log('Copying tiktoken WASM file...');
@@ -56,8 +62,12 @@ try {
       } catch (e) {
           // tiktoken might be missing too
           console.log('tiktoken not found, ensuring dependencies...');
-          execSync('npm install tiktoken --no-save', { stdio: 'inherit' });
-          tiktokenSrc = path.join(process.cwd(), 'node_modules', 'tiktoken', 'tiktoken_bg.wasm');
+          try {
+             execSync('npm install tiktoken --no-save', { stdio: 'inherit' });
+             tiktokenSrc = path.join(process.cwd(), 'node_modules', 'tiktoken', 'tiktoken_bg.wasm');
+          } catch(e) {
+             console.warn('Could not install tiktoken, skipping copy.');
+          }
       }
   }
 
